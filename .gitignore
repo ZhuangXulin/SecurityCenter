@@ -6,5 +6,6 @@
 
 # Ignore eclipse config.
 /.settings
+/bin
 .classpath
 .project
