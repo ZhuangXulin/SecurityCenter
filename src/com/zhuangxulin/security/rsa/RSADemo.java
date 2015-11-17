@@ -210,7 +210,6 @@ public class RSADemo {
     	  PKCS8EncodedKeySpec specPrv = new PKCS8EncodedKeySpec(keyBytesPrv);
     	  KeyFactory keyFactoryPrv = KeyFactory.getInstance(ALGORITHM);
     	  PrivateKey prkey = keyFactoryPrv.generatePrivate(specPrv);
-    	  
 	      final String plainText = decrypt(cipherText, prkey);
 
 	      // Printing the Original, Encrypted and Decrypted Text
