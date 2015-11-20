@@ -1,6 +1,25 @@
+
+/**
+ * The contents of this file are subject to the terms
+ * of the Common Development and Distribution License
+ * (the License). You may not use this file except in
+ * compliance with the License.
+ * You may obtain a copy of the License at
+
+ *  http://www.zhuangxulin.com/licenses/LICENSE-1.0
+  
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ *
+ */
 package com.zhuangxulin.security.rsa;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -23,195 +42,52 @@ import javax.crypto.Cipher;
 import sun.misc.BASE64Encoder;
 import sun.misc.BASE64Decoder;
 
+/**
+ * @author ZhuangXulin
+ * Nov 17, 2015
+ */
 public class RSADemo {
-	/**
-	 * String to hold name of the encryption algorithm.
-	 */
-	public static final String ALGORITHM = "RSA";
+	
 
 	/**
 	 * String to hold the name of the private key file.
 	 */
-	public static final String PRIVATE_KEY_FILE = "key/zhuangxulin@ancun.com-pvk.pem";
+	public static final String PRIVATE_KEY_FILE = "key/zhuangxulin-pvk.pem";
 
 	/**
 	 * String to hold name of the public key file.
 	 */
-	public static final String PUBLIC_KEY_FILE = "key/zhuangxulin@ancun.com-puk.pem";
-
+	public static final String PUBLIC_KEY_FILE = "key/zhuangxulin-puk.pem";
+	
 	/**
-	 * Generate key which contains a pair of private and public key using 1024
-	 * bytes. Store the set of keys in Prvate.key and Public.key files.
-	 * 
-	 * @throws NoSuchAlgorithmException
-	 * @throws IOException
-	 * @throws FileNotFoundException
+	 * originalText内容加密后保存的文件
 	 */
-	public static void generateKey() {
-		try {
-			final KeyPairGenerator keyGen = KeyPairGenerator.getInstance(ALGORITHM);
-			keyGen.initialize(1024);
-			final KeyPair key = keyGen.generateKeyPair();
-
-			File privateKeyFile = new File(PRIVATE_KEY_FILE);
-			File publicKeyFile = new File(PUBLIC_KEY_FILE);
-
-			// Create files to store public and private key
-			if (privateKeyFile.getParentFile() != null) {
-				privateKeyFile.getParentFile().mkdirs();
-			}
-			privateKeyFile.createNewFile();
-
-			if (publicKeyFile.getParentFile() != null) {
-				publicKeyFile.getParentFile().mkdirs();
-			}
-			publicKeyFile.createNewFile();
-			String publicKey = (new BASE64Encoder()).encodeBuffer((key.getPublic().getEncoded()));
-			System.out.println(publicKey);
-			// Saving the Public key in a file
-			// FileOutputStream publicKeyOS = new
-			// FileOutputStream(publicKeyFile);
-			ObjectOutputStream publicKeyOS = new ObjectOutputStream(new FileOutputStream(publicKeyFile));
-			publicKeyOS.write(publicKey.getBytes());
-			publicKeyOS.close();
-
-			// Saving the Private key in a file
-			String privateKey = (new BASE64Encoder()).encodeBuffer((key.getPrivate().getEncoded()));
-			System.out.println(privateKey);
-			FileOutputStream privateKeyOS = new FileOutputStream(privateKeyFile);
-			privateKeyOS.write(privateKey.getBytes("utf-8"));
-			privateKeyOS.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-	}
-
+	public static final String DES_ENCRYPT_TEMP_FILE = "key/des-encrypt_temp.pem";
+	
 	/**
-	 * The method checks if the pair of public and private key has been
-	 * generated.
-	 * 
-	 * @return flag indicating if the pair of keys were generated.
+	 * 获取到得des encrypt文件，这个文件是在其他地方通过public key加密
 	 */
-	public static boolean areKeysPresent() {
-
-		File privateKey = new File(PRIVATE_KEY_FILE);
-		File publicKey = new File(PUBLIC_KEY_FILE);
-
-		if (privateKey.exists() && publicKey.exists()) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * Encrypt the plain text using public key.
-	 * 
-	 * @param text
-	 *            : original plain text
-	 * @param key
-	 *            :The public key
-	 * @return Encrypted text
-	 * @throws java.lang.Exception
-	 */
-	public static byte[] encrypt(String text, PublicKey key) {
-		byte[] cipherText = null;
-		try {
-			// get an RSA cipher object and print the provider
-			final Cipher cipher = Cipher.getInstance(ALGORITHM);
-			// encrypt the plain text using the public key
-			cipher.init(Cipher.ENCRYPT_MODE, key);
-			cipherText = cipher.doFinal(text.getBytes());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return cipherText;
-	}
-
-	/**
-	 * Decrypt text using private key.
-	 * 
-	 * @param text
-	 *            :encrypted text
-	 * @param key
-	 *            :The private key
-	 * @return plain text
-	 * @throws java.lang.Exception
-	 */
-	public static String decrypt(byte[] text, PrivateKey key) {
-		byte[] dectyptedText = null;
-		try {
-			// get an RSA cipher object and print the provider
-			final Cipher cipher = Cipher.getInstance(ALGORITHM);
-
-			// decrypt the text using the private key
-			cipher.init(Cipher.DECRYPT_MODE, key);
-			dectyptedText = cipher.doFinal(text);
-
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
-
-		return new String(dectyptedText);
-	}
-
-	/**
-	 * 获取DES内容，内容使用public key加密
-	 * 
-	 * @return
-	 * @throws IOException 
-	 */
-	public static byte[] getDESValue(String desFilePath) throws IOException {
-		File f = new File(desFilePath);  
-        if(!f.exists()){  
-            throw new FileNotFoundException(desFilePath);  
-        }  
-  
-        ByteArrayOutputStream bos = new ByteArrayOutputStream((int)f.length());  
-        BufferedInputStream in = null;  
-        try{  
-            in = new BufferedInputStream(new FileInputStream(f));  
-            int buf_size = 1024;  
-            byte[] buffer = new byte[buf_size];  
-            int len = 0;  
-            while(-1 != (len = in.read(buffer,0,buf_size))){  
-                bos.write(buffer,0,len);  
-            }  
-            System.out.println(bos.toByteArray());
-            return bos.toByteArray();  
-        }catch (IOException e) {  
-            e.printStackTrace();  
-            throw e;  
-        }finally{  
-            try{  
-                in.close();  
-            }catch (IOException e) {  
-                e.printStackTrace();  
-            }  
-            bos.close();  
-        }
-	}
-
+	public static final String DES_ENCRYPT_FILE = "key/zhuangxulin-des_key.pem";
 	/**
 	 * Test the EncryptionUtil
 	 */
 	public static void main(String[] args) {
 		try {
 			// Check if the pair of keys are present else generate those.
-			if (!areKeysPresent()) {
+			if (!RSAUtil.areKeysPresent(PRIVATE_KEY_FILE,PUBLIC_KEY_FILE,DES_ENCRYPT_FILE)) {
 				// Method generates a pair of keys using the RSA algorithm and
 				// stores it
 				// in their respective files
-				generateKey();
+				RSAUtil.generateKey(PRIVATE_KEY_FILE,PUBLIC_KEY_FILE);
+				System.out.println("DES encrypt File is not exist,please checked it.");
 			}
-
-			final String originalText = "Text to be encrypted,Hello World. ";
+			//此编码是des encrypt file中进行解码后的内容
+			final String originalText = "6ae2c40c909de52f15cd3f9a39e37467";
 			// Encrypt the string using the public key
 			File pukFile = new File(PUBLIC_KEY_FILE);
 			BufferedReader readerPuk = new BufferedReader(new FileReader(pukFile));
 			String tempStringPuk = null;
 			String strPuk = "";
-			// 一次读入一行，直到读入null为文件结束
 			while ((tempStringPuk = readerPuk.readLine()) != null) {
 				strPuk += tempStringPuk;
 			}
@@ -224,10 +100,12 @@ public class RSADemo {
 			// public key 转换成为base64
 			byte[] keyBytes = (new BASE64Decoder()).decodeBuffer(publicStr);
 			X509EncodedKeySpec specPuk = new X509EncodedKeySpec(keyBytes);
-			KeyFactory keyFactoryPuk = KeyFactory.getInstance(ALGORITHM);
+			KeyFactory keyFactoryPuk = KeyFactory.getInstance(RSAUtil.ALGORITHM);
 			PublicKey pukey = keyFactoryPuk.generatePublic(specPuk);
-			final byte[] cipherText = encrypt(originalText, pukey);
-
+			final byte[] cipherText = RSAUtil.encrypt(originalText, pukey);
+			//保存des加密后的内容到文件
+			RSAUtil.saveFile(DES_ENCRYPT_TEMP_FILE,cipherText);
+			
 			// Decrypt the cipher text using the private key.
 			File filePrv = new File(PRIVATE_KEY_FILE);
 			BufferedReader readerPrv = new BufferedReader(new FileReader(filePrv));
@@ -243,23 +121,24 @@ public class RSADemo {
 			if (privateStr.contains(PRVBEGIN) && privateStr.contains(PRVEND)) {
 				privateStr = privateStr.substring(PRVBEGIN.length(), privateStr.lastIndexOf(PRVEND));
 			}
-			
 
 			// private key 转换成为base64
 			byte[] keyBytesPrv = (new BASE64Decoder()).decodeBuffer(privateStr);
 			java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 			PKCS8EncodedKeySpec specPrv = new PKCS8EncodedKeySpec(keyBytesPrv);
-			KeyFactory keyFactoryPrv = KeyFactory.getInstance(ALGORITHM);
+			KeyFactory keyFactoryPrv = KeyFactory.getInstance(RSAUtil.ALGORITHM);
 			PrivateKey prkey = keyFactoryPrv.generatePrivate(specPrv);
-			//final String plainText = decrypt(cipherText, prkey);
-			final String plainText = decrypt(RSADemo.getDESValue("key/zhuangxulin@ancun.com-des_key.pem"), prkey);
-			
+			final String plainText = RSAUtil.decrypt(cipherText, prkey);
+			final String plainText2 = RSAUtil.decrypt(
+					RSAUtil.getDESValue(DES_ENCRYPT_TEMP_FILE), prkey);
+			final String plainText3 = RSAUtil.decrypt(RSAUtil.getDESValue(DES_ENCRYPT_FILE), prkey);
 
 			// Printing the Original, Encrypted and Decrypted Text
-			System.out.println("Original: " + originalText);
-			System.out.println("Encrypted: " + cipherText.toString());
-			System.out.println("Decrypted: " + plainText);
-
+			System.out.println("Original(待加密内容): " + originalText);
+			System.out.println("Encrypted(): " + cipherText.toString());
+			System.out.println("Decrypted(解密后的内容，和待加密内容理应保持一致): " + plainText);
+			System.out.println("Decrypted(对生成的des temp文件解密后的内容): " + plainText2);
+			System.out.println("Decrypted(对des encrypt文件解密后的内容): " + plainText3);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
